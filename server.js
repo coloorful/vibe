@@ -60,7 +60,7 @@ async function readRequestBody(req) {
     req.on("data", (chunk) => {
       data += chunk;
       if (data.length > 25 * 1024 * 1024) {
-        reject(new Error("Request body is too large. Please upload files in smaller batches."));
+        reject(new Error("上传内容过大，请分批上传文件。"));
         req.destroy();
       }
     });
@@ -78,7 +78,7 @@ function safeRepoName(value) {
     .replace(/^-|-$/g, "");
 
   if (!cleaned) {
-    throw new Error("Please enter a project name.");
+    throw new Error("请填写项目名称。");
   }
 
   return cleaned.toLowerCase();
@@ -90,7 +90,7 @@ function sanitizeRelativePath(inputPath) {
     .replace(/^\/+/, "");
 
   if (!normalized || normalized.includes("..")) {
-    throw new Error(`Illegal file path: ${inputPath}`);
+    throw new Error(`文件路径不合法: ${inputPath}`);
   }
 
   return normalized;
@@ -129,7 +129,7 @@ function runGit(args, cwd) {
         return;
       }
 
-      reject(new Error(stderr.trim() || stdout.trim() || `git exited with code ${code}`));
+      reject(new Error(stderr.trim() || stdout.trim() || `git 退出码 ${code}`));
     });
   });
 }
@@ -229,25 +229,25 @@ async function handleInitRepo(req, res) {
   await fsp.mkdir(repoPath, { recursive: true });
 
   if (!(await exists(gitPath))) {
-    logs.push(`Create local folder: ${repoPath}`);
+    logs.push(`创建本地项目目录: ${repoPath}`);
     await runGit(["init", "-b", "main"], repoPath);
     await runGit(["config", "user.name", "Git Beginner Studio"], repoPath);
     await runGit(["config", "user.email", "git-beginner-studio@local.dev"], repoPath);
-    logs.push("Local Git repository initialized");
+    logs.push("本地 Git 仓库初始化完成");
   } else {
-    logs.push("Repository already exists, skipped initialization");
+    logs.push("仓库已存在，跳过初始化");
   }
 
   if (remoteUrl) {
     await ensureRemote(repoPath, remoteUrl);
-    logs.push(`Remote origin bound: ${remoteUrl}`);
+    logs.push(`已绑定远程仓库: ${remoteUrl}`);
   }
 
   await writeState({ activeRepo: repoName, remoteUrl });
 
   sendJson(res, 200, {
     ok: true,
-    message: "Local repository is ready.",
+    message: "本地仓库已准备完成。",
     logs,
     summary: await getRepoSummary()
   });
@@ -258,7 +258,7 @@ async function handleUploadFiles(req, res) {
   if (!repoPath) {
     sendJson(res, 400, {
       ok: false,
-      message: "Please create a local project first."
+      message: "请先创建一个本地项目。"
     });
     return;
   }
@@ -266,7 +266,7 @@ async function handleUploadFiles(req, res) {
   const body = JSON.parse((await readRequestBody(req)) || "{}");
   const files = Array.isArray(body.files) ? body.files : [];
   if (!files.length) {
-    throw new Error("Please choose files before uploading.");
+    throw new Error("请先选择要上传的文件。");
   }
 
   const logs = [];
@@ -276,12 +276,12 @@ async function handleUploadFiles(req, res) {
 
     await fsp.mkdir(path.dirname(targetPath), { recursive: true });
     await fsp.writeFile(targetPath, Buffer.from(String(file.contentBase64 || ""), "base64"));
-    logs.push(`Write file: ${relativePath}`);
+    logs.push(`写入文件: ${relativePath}`);
   }
 
   sendJson(res, 200, {
     ok: true,
-    message: `Uploaded ${files.length} file(s) into the local project.`,
+    message: `已写入 ${files.length} 个文件到本地项目。`,
     logs,
     summary: await getRepoSummary()
   });
@@ -292,36 +292,36 @@ async function handleSaveVersion(req, res) {
   if (!repoPath) {
     sendJson(res, 400, {
       ok: false,
-      message: "Please create a local project first."
+      message: "请先创建一个本地项目。"
     });
     return;
   }
 
   const body = JSON.parse((await readRequestBody(req)) || "{}");
-  const commitMessage = String(body.message || "").trim() || "Save a new local version";
+  const commitMessage = String(body.message || "").trim() || "保存一次本地版本";
   const logs = [];
 
-  logs.push("Step 1/3: Check whether the project has new changes");
+  logs.push("步骤 1/3: 检查当前项目是否有新变化");
   const beforeStatus = await runGit(["status", "--short"], repoPath);
   if (!beforeStatus.stdout.trim()) {
     sendJson(res, 200, {
       ok: true,
-      message: "No new changes found. Nothing to save right now.",
+      message: "当前没有新变化，不需要保存新版本。",
       logs,
       summary: await getRepoSummary()
     });
     return;
   }
 
-  logs.push("Step 2/3: Collect all current changes");
+  logs.push("步骤 2/3: 收集当前全部变化");
   await runGit(["add", "."], repoPath);
 
-  logs.push(`Step 3/3: Save one version record: ${commitMessage}`);
+  logs.push(`步骤 3/3: 生成版本记录: ${commitMessage}`);
   await runGit(["commit", "-m", commitMessage], repoPath);
 
   sendJson(res, 200, {
     ok: true,
-    message: "A new local Git version has been saved.",
+    message: "新的本地版本已保存。",
     logs,
     summary: await getRepoSummary()
   });
@@ -332,7 +332,7 @@ async function handleSyncRemote(req, res) {
   if (!repoPath) {
     sendJson(res, 400, {
       ok: false,
-      message: "Please create a local project first."
+      message: "请先创建一个本地项目。"
     });
     return;
   }
@@ -340,39 +340,39 @@ async function handleSyncRemote(req, res) {
   const body = JSON.parse((await readRequestBody(req)) || "{}");
   const state = await readState();
   const remoteUrl = String(body.remoteUrl || "").trim() || state.remoteUrl;
-  const commitMessage = String(body.message || "").trim() || "Auto save before remote sync";
+  const commitMessage = String(body.message || "").trim() || "远程同步前自动保存版本";
   const logs = [];
 
   if (!remoteUrl) {
     sendJson(res, 400, {
       ok: false,
-      message: "Please fill in the remote repository address first."
+      message: "请先填写远程仓库地址。"
     });
     return;
   }
 
-  logs.push("Step 1/4: Check whether there are local changes");
+  logs.push("步骤 1/4: 检查本地是否存在未保存变化");
   const beforeStatus = await runGit(["status", "--short"], repoPath);
 
   if (beforeStatus.stdout.trim()) {
-    logs.push("Step 2/4: Collect all changes into this sync");
+    logs.push("步骤 2/4: 自动收集全部变化");
     await runGit(["add", "."], repoPath);
-    logs.push(`Step 3/4: Save a local version before pushing: ${commitMessage}`);
+    logs.push(`步骤 3/4: 推送前自动保存版本: ${commitMessage}`);
     await runGit(["commit", "-m", commitMessage], repoPath);
   } else {
-    logs.push("Step 2/4: No local changes, skip local save");
-    logs.push("Step 3/4: Continue with remote sync");
+    logs.push("步骤 2/4: 当前没有新变化，跳过本地保存");
+    logs.push("步骤 3/4: 直接继续远程同步");
   }
 
   await ensureRemote(repoPath, remoteUrl);
   await writeState({ ...state, remoteUrl });
 
-  logs.push("Step 4/4: Push main branch to remote origin");
+  logs.push("步骤 4/4: 推送主线版本到远程仓库 origin/main");
   await runGit(["push", "-u", "origin", "main"], repoPath);
 
   sendJson(res, 200, {
     ok: true,
-    message: "Local project has been synchronized to the remote repository.",
+    message: "本地项目已同步到远程仓库。",
     logs,
     summary: await getRepoSummary()
   });
@@ -383,7 +383,7 @@ async function handleCheckoutVersion(req, res) {
   if (!repoPath) {
     sendJson(res, 400, {
       ok: false,
-      message: "Please create a local project first."
+      message: "请先创建一个本地项目。"
     });
     return;
   }
@@ -392,14 +392,14 @@ async function handleCheckoutVersion(req, res) {
   const ref = String(body.ref || "").trim();
 
   if (!ref) {
-    throw new Error("Please choose a version to switch to.");
+    throw new Error("请选择一个要切换的版本。");
   }
 
   const dirty = await runGit(["status", "--short"], repoPath);
   if (dirty.stdout.trim()) {
     sendJson(res, 400, {
       ok: false,
-      message: "You still have unsaved changes. Save them first, then switch versions."
+      message: "当前还有未保存变化，请先保存，再切换版本。"
     });
     return;
   }
@@ -407,15 +407,15 @@ async function handleCheckoutVersion(req, res) {
   const logs = [];
   if (ref === "main") {
     await runGit(["switch", "main"], repoPath);
-    logs.push("Switched back to the main line");
+    logs.push("已回到主线版本");
   } else {
     await runGit(["checkout", "--detach", ref], repoPath);
-    logs.push(`Switched to historical version ${ref}`);
+    logs.push(`已切换到历史版本 ${ref}`);
   }
 
   sendJson(res, 200, {
     ok: true,
-    message: "Version switch complete.",
+    message: "版本切换完成。",
     logs,
     summary: await getRepoSummary()
   });
@@ -491,7 +491,7 @@ async function route(req, res) {
   } catch (error) {
     sendJson(res, 500, {
       ok: false,
-      message: error.message || "Server error."
+      message: error.message || "服务异常。"
     });
   }
 }
