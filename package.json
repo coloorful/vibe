@@ -1,0 +1,9 @@
+{
+  "name": "git-beginner-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A local-first Git visual interface for beginner users.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

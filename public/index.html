@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Git 新手操作台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Local First Git</p>
+          <h1>Git 新手操作台</h1>
+          <p class="hero-text">
+            用网页按钮完成 Git 操作。先管理本地版本，再一键同步到远程仓库。
+          </p>
+        </div>
+        <div class="hero-badge">
+          <span>当前模式</span>
+          <strong>本地保存 + 自动同步</strong>
+          <small>不要求记住 add、commit、push 这些命令</small>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="intro-strip">
+          <article>
+            <span>1</span>
+            <h2>创建项目</h2>
+            <p>系统自动建立本地 Git 仓库，并绑定远程地址。</p>
+          </article>
+          <article>
+            <span>2</span>
+            <h2>上传文件</h2>
+            <p>把本次要保存的文件写进项目目录。</p>
+          </article>
+          <article>
+            <span>3</span>
+            <h2>保存或同步</h2>
+            <p>按钮会自动跑完整流程，不需要手动补命令。</p>
+          </article>
+        </section>
+
+        <section class="board">
+          <div class="main-panel">
+            <div class="section-head">
+              <p>项目设置</p>
+              <h2>先把本地仓库和远程仓库准备好</h2>
+            </div>
+
+            <form id="repo-form" class="stacked-form">
+              <label>
+                <span>项目名称</span>
+                <input
+                  id="repo-name"
+                  name="repoName"
+                  type="text"
+                  placeholder="例如：vibe-demo"
+                  required
+                />
+              </label>
+              <label>
+                <span>远程仓库地址</span>
+                <input
+                  id="remote-url"
+                  name="remoteUrl"
+                  type="text"
+                  value="https://github.com/coloorful/vibe.git"
+                  placeholder="例如：https://github.com/your-name/project.git"
+                />
+              </label>
+              <button type="submit" class="primary-btn">创建本地项目</button>
+            </form>
+
+            <div class="section-head top-gap">
+              <p>文件上传</p>
+              <h2>选择这次要放进项目里的文件</h2>
+            </div>
+
+            <form id="upload-form" class="stacked-form">
+              <label class="upload-box">
+                <input id="file-input" type="file" multiple webkitdirectory />
+                <strong>点击选择文件或整个文件夹</strong>
+                <small>文件会直接写入当前本地项目目录</small>
+              </label>
+              <ul id="file-list" class="file-list"></ul>
+              <button type="submit" class="secondary-btn">写入项目文件</button>
+            </form>
+
+            <div class="section-head top-gap">
+              <p>版本操作</p>
+              <h2>保存本地版本，或自动同步到远程</h2>
+            </div>
+
+            <form id="save-form" class="commit-form">
+              <input
+                id="commit-message"
+                type="text"
+                placeholder="给这次操作写一句说明，例如：完成首页初稿"
+              />
+              <div class="action-row">
+                <button type="submit" class="primary-btn">保存一次本地版本</button>
+                <button id="sync-btn" type="button" class="secondary-btn">
+                  自动同步到远程仓库
+                </button>
+                <button id="back-main-btn" type="button" class="ghost-btn">
+                  回到主线版本
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <aside class="side-panel">
+            <section class="status-box">
+              <p>当前状态</p>
+              <div id="status-summary" class="status-summary"></div>
+            </section>
+
+            <section class="status-box">
+              <p>执行日志</p>
+              <div id="log-output" class="log-output">等待操作...</div>
+            </section>
+
+            <section class="status-box">
+              <p>版本时间线</p>
+              <ul id="history-list" class="history-list timeline"></ul>
+            </section>
+          </aside>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
